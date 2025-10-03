@@ -1,4 +1,3 @@
-// CommonJS
 const jwt = require('jsonwebtoken');
 
 module.exports.handler = async (event) => {
@@ -26,3 +25,4 @@ module.exports.handler = async (event) => {
 
   return { statusCode: 200, body: JSON.stringify({ ok: true, token, link }) };
 };
+
