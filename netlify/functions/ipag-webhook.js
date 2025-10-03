@@ -1,7 +1,7 @@
-// netlify/functions/ipag-webhook.js  (CommonJS)
+// CommonJS
 const jwt = require('jsonwebtoken');
 
-exports.handler = async (event) => {
+module.exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -19,13 +19,10 @@ exports.handler = async (event) => {
 
   const secret = process.env.ACCESS_TOKEN_SECRET;
   const siteUrl = process.env.SITE_URL || 'https://seu-site.netlify.app';
-  if (!secret) {
-    return { statusCode: 500, body: 'ACCESS_TOKEN_SECRET não configurado' };
-  }
+  if (!secret) return { statusCode: 500, body: 'ACCESS_TOKEN_SECRET não configurado' };
 
   const token = jwt.sign({ email }, secret, { expiresIn: '24h' });
   const link = `${siteUrl}/index.html?token=${token}`;
 
-  console.log('✅ Pagamento aprovado. Entregar link ao cliente:', link);
   return { statusCode: 200, body: JSON.stringify({ ok: true, token, link }) };
 };
