@@ -1,3 +1,4 @@
+// netlify/functions/validate-token.js  (CommonJS)
 const jwt = require('jsonwebtoken');
 
 exports.handler = async (event) => {
@@ -8,7 +9,10 @@ exports.handler = async (event) => {
   if (!secret) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ valido: false, error: 'ACCESS_TOKEN_SECRET não configurado' }),
+      body: JSON.stringify({
+        valido: false,
+        error: 'ACCESS_TOKEN_SECRET não configurado',
+      }),
     };
   }
 
