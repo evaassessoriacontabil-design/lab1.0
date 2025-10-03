@@ -1,7 +1,7 @@
-// netlify/functions/validate-token.js  (CommonJS)
+// CommonJS
 const jwt = require('jsonwebtoken');
 
-exports.handler = async (event) => {
+module.exports.handler = async (event) => {
   const token =
     (event.queryStringParameters && event.queryStringParameters.token) || '';
   const secret = process.env.ACCESS_TOKEN_SECRET;
