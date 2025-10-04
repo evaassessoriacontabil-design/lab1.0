@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 
 module.exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
+    console.log('MP-WEBHOOK-RESULT', JSON.stringify({ ok: true, token, link }));
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
