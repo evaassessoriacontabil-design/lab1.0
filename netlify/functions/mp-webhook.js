@@ -6,7 +6,6 @@ module.exports.handler = async (event) => {
     console.log('MP-WEBHOOK-RESULT', JSON.stringify({ ok: true, token, link }));
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
-
   const secret = process.env.ACCESS_TOKEN_SECRET;          // já existe
   const siteUrl = process.env.SITE_URL || 'https://labnivel.netlify.app';
   const mpToken = process.env.MP_ACCESS_TOKEN;             // vamos criar agora
