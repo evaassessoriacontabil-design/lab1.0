@@ -15,9 +15,7 @@
   .wrap{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-end;height:100%;padding:5%}
 
   /* ---------- Fundo responsivo com qualidade ---------- */
-  /* Padrão: cover (mantém proporção, nítido; pode cortar um pouco) */
   .bg{position:absolute;inset:0;pointer-events:none;background-position:center;background-repeat:no-repeat;background-size:cover}
-  /* Em proporções extremas (muito alto ou muito largo), usar contain para evitar cortes e distorção */
   @media (max-aspect-ratio: 9/16), (min-aspect-ratio: 21/9){
     .bg{background-size:contain;background-color:#000}
   }
@@ -26,7 +24,6 @@
   .btn{appearance:none;-webkit-appearance:none;background:#ff2d2d;color:#fff;border:0;border-radius:12px;padding:16px 28px;font-weight:700;font-size:28px;min-width:240px;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
   .btn-secondary{background:#2a2a2a;color:#fff;border:0;border-radius:12px;padding:16px 28px;font-weight:700;font-size:22px;min-width:220px;cursor:pointer}
   .btn-cta{background:#ff2d2d;color:#fff;border:0;border-radius:12px;padding:16px 28px;font-weight:700;font-size:22px;min-width:220px;cursor:pointer}
-
   .quiz-card{background:#fff;color:#000;border-radius:14px;padding:22px;max-width:640px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
 
   /* ---------- Quiz à direita + cabeçalho fora do card ---------- */
@@ -148,7 +145,7 @@ async function validarAcessoSeHouverToken() {
 }
 function gateOr(fn){ return (...a)=> isAuthorized ? fn(...a) : (alert("Acesso restrito. Ative o jogo na Introdução e volte com o link de acesso."), go('intro')); }
 
-/* ===== Áudio (com desbloqueio iOS) ===== */
+/* ===== Áudio ===== */
 const clickSound=document.getElementById('snd-click');
 const winSound=document.getElementById('snd-win');
 function playClick(){ try{ clickSound.currentTime=0; clickSound.play(); }catch(e){} }
@@ -162,7 +159,7 @@ function unlockAudio(){
 document.addEventListener('touchstart',unlockAudio,{passive:true,once:true});
 document.addEventListener('pointerdown',unlockAudio,{passive:true,once:true});
 
-/* ===== Perguntas (V2) com pesos “salteados” ===== */
+/* ===== Perguntas e resultados (V2 com pesos “salteados”) ===== */
 const QUESTIONS = [
   { q:"Você já possui um plano de negócios estruturado?",
     a:["Rascunho em andamento, usamos como referência quando necessário","Sim, completo, revisado e usado nas decisões","Ainda não; organizo a ideia em anotações soltas","Versão enxuta com metas e orçamento básico, atualizada às vezes"],
@@ -226,7 +223,6 @@ const QUESTIONS = [
   }
 ];
 
-/* ===== Resultados ===== */
 const RESULTS={
   1:{title:"Nível 1 – Aventureiro 🚀",
      desc:"Parabéns pela coragem de dar o primeiro passo! Você, assim como eu, já saiu da ideia e partiu para a ação. Agora é hora de transformar entusiasmo em estratégia para construir uma base sólida e sustentável para o seu negócio.",
@@ -247,7 +243,7 @@ let state={idx:0,score:0,gender:"masc"};
 function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show')); document.getElementById(id).classList.add('show'); }
 let start = gateOr(function(g){ state.gender=g;state.idx=0;state.score=0; renderQ(); go('quiz'); });
 
-/* ===== Renderização do quiz ===== */
+/* ===== Render ===== */
 function renderQ(){
   if(state.idx>=QUESTIONS.length){finish();return;}
   let fundo="images/fundo1.png";
@@ -286,16 +282,25 @@ function finish(){
 /* ===== Inicialização ===== */
 document.addEventListener('DOMContentLoaded', validarAcessoSeHouverToken);
 
-/* ===== Fallback: guardar pref_id ao clicar no botão do MP ===== */
+/* ===== Clique do botão: abre checkout em nova aba e deixa o jogo em /acesso.html ===== */
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('ativarBtn');
   if (!btn) return;
-  btn.addEventListener('click', () => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
     try {
       const u = new URL(btn.href);
       const pref = u.searchParams.get('pref_id') || u.searchParams.get('preference_id');
       if (pref) localStorage.setItem('mp_pref_id', pref);
-    } catch(e) {}
+      // Abre o checkout em nova aba
+      window.open(btn.href, '_blank', 'noopener');
+      // Mantém esta aba validando automaticamente
+      const query = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
+      window.location.href = '/acesso.html' + query;
+    } catch(err) {
+      window.open(btn.href, '_blank', 'noopener');
+      window.location.href = '/acesso.html';
+    }
   });
 });
 </script>
