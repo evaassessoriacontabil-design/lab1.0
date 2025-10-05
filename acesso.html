@@ -19,7 +19,7 @@
     <div class="spin"></div>
     <p>Isso leva só alguns segundos. Você será redirecionada automaticamente.</p>
     <p class="hint" id="status"></p>
-    <button class="btn" id="forcar" style="display:none">Liberar acesso</button>
+    <button class="btn" id="forcar" style="display:none">Liberar acesso agora</button>
   </div>
 
   <script>
@@ -27,52 +27,56 @@
     const statusEl = document.getElementById('status');
     const btn = document.getElementById('forcar');
 
-    // Monta a URL para claim-access usando:
-    // 1) payment_id/collection_id enviados pelo MP
-    // 2) preference_id/pref_id enviados pelo MP
-    // 3) Fallback: preference_id salvo no localStorage quando o usuário clicou no botão da INTRO
-    function makeClaimUrl(){
+    function getPrefFromAnywhere(){
       const qs = new URLSearchParams(location.search);
-      const site = location.origin || 'https://labnivel.netlify.app';
-      const base = site + '/.netlify/functions/claim-access';
-
-      // tenta pegar direto da URL
-      const payment_id   = qs.get('payment_id') || qs.get('collection_id') || qs.get('id') || qs.get('data.id');
-      const prefFromUrl  = qs.get('preference_id') || qs.get('pref_id');
-      const prefFromLS   = localStorage.getItem('mp_pref_id');
-
-      if (payment_id) {
-        return base + '?payment_id=' + encodeURIComponent(payment_id);
-      }
-      if (prefFromUrl) {
-        return base + '?preference_id=' + encodeURIComponent(prefFromUrl);
-      }
-      if (prefFromLS) {
-        return base + '?preference_id=' + encodeURIComponent(prefFromLS);
-      }
-      return base; // sem parâmetros: a função vai retornar ao index com um aviso
+      const payment_id = qs.get('payment_id') || qs.get('collection_id') || qs.get('id') || qs.get('data.id');
+      const prefUrl   = qs.get('preference_id') || qs.get('pref_id');
+      const prefLS    = localStorage.getItem('mp_pref_id');
+      return { payment_id, preference_id: prefUrl || prefLS || '' };
     }
 
-    async function tryClaim(){
-      const url = makeClaimUrl();
-      statusEl.textContent = 'Contactando servidor…';
-      try {
-        // redirecionamento 302 será seguido automaticamente pelo navegador
-        location.replace(url);
-      } catch(e){
-        statusEl.textContent = 'Falha ao validar. Você pode tentar novamente.';
-        btn.style.display = 'inline-block';
+    async function checkOnce(){
+      const {payment_id, preference_id} = getPrefFromAnywhere();
+      const p = new URLSearchParams();
+      if (payment_id) p.set('payment_id', payment_id);
+      if (!payment_id && preference_id) p.set('preference_id', preference_id);
+
+      const url = '/.netlify/functions/check-access?' + p.toString();
+      statusEl.textContent = 'Consultando status…';
+      try{
+        const r = await fetch(url, { cache:'no-store' });
+        const data = await r.json();
+        if (data.ok && data.link){
+          location.replace(data.link); // jogo liberado
+          return true;
+        }else{
+          statusEl.textContent = 'Pagamento: ' + (data.status || 'aguardando');
+          return false;
+        }
+      }catch(e){
+        statusEl.textContent = 'Falha na consulta. Tentaremos de novo.';
+        return false;
       }
     }
 
-    // Botão manual caso algo impeça o redirect automático
-    btn.addEventListener('click', tryClaim);
+    async function startPolling(){
+      // primeira tentativa imediata
+      if (await checkOnce()) return;
+      // tenta por até ~2 minutos
+      let tentativas = 0;
+      const tm = setInterval(async ()=>{
+        tentativas++;
+        const ok = await checkOnce();
+        if (ok || tentativas >= 24){ // 24*5s ≈ 2min
+          clearInterval(tm);
+          btn.style.display = ok ? 'none' : 'inline-block';
+          if (!ok) statusEl.textContent = 'Ainda pendente. Você pode tentar de novo pelo botão.';
+        }
+      }, 5000);
+    }
 
-    // dispara automaticamente
-    tryClaim();
-
-    // Se nada acontecer em 8s, mostra o botão manual
-    setTimeout(()=>{ btn.style.display='inline-block'; }, 8000);
+    btn.addEventListener('click', startPolling);
+    startPolling();
   })();
   </script>
 </body>
