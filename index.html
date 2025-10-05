@@ -69,11 +69,12 @@
 <section id="intro" class="screen">
   <div class="bg" style="background-image:url('images/intro.png')"></div>
   <div class="wrap" style="align-items:flex-end;justify-content:flex-end">
-    <!-- MERCADO PAGO — abre em nova aba -->
-    <a class="btn" id="ativarBtn" target="_blank" rel="noopener"
-       href="https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26">
-      ATIVAR JOGO – R$29,90
-    </a>
+   <!-- MERCADO PAGO — abre em nova aba e mantém o jogo em /acesso.html -->
+<a class="btn" id="ativarBtn"
+   href="https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26"
+   onclick="return payAndValidate(this.href);">
+  ATIVAR JOGO – R$29,90
+</a>
   </div>
 </section>
 
@@ -303,6 +304,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+</script>
+// Abre o checkout em nova aba e deixa esta aba em /acesso.html validando automaticamente
+  function payAndValidate(url){
+    try{
+      const u = new URL(url);
+      const pref = u.searchParams.get('pref_id') || u.searchParams.get('preference_id');
+      if (pref) localStorage.setItem('mp_pref_id', pref);   // fallback
+
+      // 1) abre o checkout em nova aba (gesto do usuário → permitido pelos navegadores)
+      window.open(url, '_blank', 'noopener');
+
+      // 2) nesta aba, vai para /acesso.html já com o preference_id (para validar e redirecionar)
+      const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
+      window.location.href = '/acesso.html' + q;
+    }catch(e){
+      // fallback básico
+      window.open(url, '_blank', 'noopener');
+      window.location.href = '/acesso.html';
+    }
+    return false; // impede a navegação padrão da âncora
+  }
 </script>
 
 </body>
