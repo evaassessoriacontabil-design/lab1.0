@@ -69,16 +69,14 @@
 <section id="intro" class="screen">
   <div class="bg" style="background-image:url('images/intro.png')"></div>
   <div class="wrap" style="align-items:flex-end;justify-content:flex-end">
-   <!-- MERCADO PAGO — abre em nova aba e mantém o jogo em /acesso.html -->
-<a class="btn" id="ativarBtn"
-   href="https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26"
-   onclick="return payAndValidate(this.href);">
-  ATIVAR JOGO – R$29,90
-</a>
-  </div>
+ <!-- MERCADO PAGO — abre em nova aba e esta aba vai para /acesso.html -->
+<button class="btn" id="ativarBtn" onclick="return payAndValidate('https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26');">
+ATIVAR JOGO – R$29,90
+</button>
+ </div>
 </section>
 
-<!-- GÊNERO -->
+  <!-- GÊNERO -->
 <section id="gender" class="screen">
   <div class="bg" style="background-image:url('images/genero.png')"></div>
   <div class="wrap">
