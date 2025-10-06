@@ -132,7 +132,7 @@
 <audio id="snd-win" src="sounds/win.mp3" preload="auto" playsinline></audio>
 
 <script>
-/* -------- Navegação básica -------- */
+/* -------- Navegação -------- */
 function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
   document.getElementById(id).classList.add('show');
@@ -300,6 +300,7 @@ function goAccessAndKeep(anchor){
       u.searchParams.get('preference-id');
     if (pref) localStorage.setItem('mp_pref_id', pref);
     const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
+    // Abre o checkout já pelo target="_blank"; aqui garantimos que ESTA aba vá validar
     setTimeout(function(){ window.location.href = '/acesso.html' + q; }, 0);
   }catch(e){
     setTimeout(function(){ window.location.href = '/acesso.html'; }, 0);
