@@ -71,11 +71,15 @@
 <section id="intro" class="screen">
   <div class="bg" style="background-image:url('images/intro.png')"></div>
   <div class="wrap" style="align-items:flex-end;justify-content:flex-end">
-    <!-- Mercado Pago — abre o checkout em nova aba e esta aba vai para /acesso.html -->
-    <button class="btn" id="ativarBtn" type="button"
-      onclick="return payAndValidate('https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26');">
+
+    <!-- Mercado Pago — abre checkout em nova aba e ESTA aba vai para /acesso.html -->
+    <a class="btn" id="ativarBtn"
+       target="_blank" rel="noopener"
+       href="https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26"
+       onclick="return goAccessAndKeep(this);">
       ATIVAR JOGO – R$29,90
-    </button>
+    </a>
+
   </div>
 </section>
 
@@ -311,6 +315,29 @@ function payAndValidate(url){
   }
   return false; // impede navegação padrão do botão
 }
+<script>
+  // Abre o checkout em nova aba (target="_blank") e faz ESTA aba ir para /acesso.html
+  function goAccessAndKeep(anchor){
+    try{
+      const u = new URL(anchor.href);
+      // lê todos os formatos: pref_id, preference_id e preference-id
+      const pref =
+        u.searchParams.get('pref_id') ||
+        u.searchParams.get('preference_id') ||
+        u.searchParams.get('preference-id');
+
+      if (pref) localStorage.setItem('mp_pref_id', pref);
+      const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
+
+      // Navega ESTA aba para /acesso.html enquanto o anchor abre o checkout em nova aba
+      setTimeout(function(){ window.location.href = '/acesso.html' + q; }, 0);
+    }catch(e){
+      // fallback: mesmo sem pref_id, já vai para acesso.html para fazer o polling
+      setTimeout(function(){ window.location.href = '/acesso.html'; }, 0);
+    }
+    // return true -> mantém o comportamento do <a>, abrindo o checkout na nova aba
+    return true;
+  }
 </script>
 
 </body>
