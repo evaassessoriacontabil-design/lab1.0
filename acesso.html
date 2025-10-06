@@ -30,7 +30,8 @@
     function getPrefFromAnywhere(){
       const qs = new URLSearchParams(location.search);
       const payment_id = qs.get('payment_id') || qs.get('collection_id') || qs.get('id') || qs.get('data.id');
-      const prefUrl   = qs.get('preference_id') || qs.get('pref_id');
+      // lê também o formato "preference-id" (com hífen)
+      const prefUrl   = qs.get('preference_id') || qs.get('pref_id') || qs.get('preference-id');
       const prefLS    = localStorage.getItem('mp_pref_id');
       return { payment_id, preference_id: prefUrl || prefLS || '' };
     }
@@ -60,14 +61,12 @@
     }
 
     async function startPolling(){
-      // primeira tentativa imediata
-      if (await checkOnce()) return;
-      // tenta por até ~2 minutos
-      let tentativas = 0;
+      if (await checkOnce()) return;           // primeira tentativa
+      let tries = 0;
       const tm = setInterval(async ()=>{
-        tentativas++;
+        tries++;
         const ok = await checkOnce();
-        if (ok || tentativas >= 24){ // 24*5s ≈ 2min
+        if (ok || tries >= 24){                // 24 * 5s ≈ 2 minutos
           clearInterval(tm);
           btn.style.display = ok ? 'none' : 'inline-block';
           if (!ok) statusEl.textContent = 'Ainda pendente. Você pode tentar de novo pelo botão.';
