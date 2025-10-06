@@ -1,5 +1,4 @@
 // netlify/functions/check-access.js  (CommonJS, Node 18+)
-// Retorna JSON: { ok: true, link } quando aprovado; { ok: false, status } caso contrário.
 const jwt = require('jsonwebtoken');
 
 module.exports.handler = async (event) => {
@@ -16,9 +15,9 @@ module.exports.handler = async (event) => {
     // 1) tenta via payment_id
     let paymentId = qs.payment_id || qs.collection_id || qs['data.id'] || qs.id;
 
-    // 2) se não tiver, resolve via preference_id
-    if (!paymentId && (qs.preference_id || qs.pref_id)) {
-      const pref = qs.preference_id || qs.pref_id;
+    // 2) se não tiver, resolve via preference_id (aceita "preference-id")
+    if (!paymentId && (qs.preference_id || qs.pref_id || qs['preference-id'])) {
+      const pref = qs.preference_id || qs.pref_id || qs['preference-id'];
       try {
         const r = await fetch(
           `https://api.mercadopago.com/merchant_orders/search?preference_id=${encodeURIComponent(pref)}`,
