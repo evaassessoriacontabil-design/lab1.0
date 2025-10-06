@@ -12,10 +12,8 @@ module.exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ ok:false, error:'env' }) };
     }
 
-    // 1) tenta via payment_id
     let paymentId = qs.payment_id || qs.collection_id || qs['data.id'] || qs.id;
 
-    // 2) se não tiver, resolve via preference_id (aceita "preference-id")
     if (!paymentId && (qs.preference_id || qs.pref_id || qs['preference-id'])) {
       const pref = qs.preference_id || qs.pref_id || qs['preference-id'];
       try {
@@ -36,7 +34,6 @@ module.exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ ok:false, status:'no-id' }) };
     }
 
-    // 3) consulta pagamento
     const rPay = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
       headers: { Authorization: `Bearer ${mpToken}` }
     });
@@ -45,15 +42,17 @@ module.exports.handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ ok:false, status:'lookup-error', detail:info }) };
     }
 
-    const status = info.status;                 // approved / in_process / rejected
+    const status = info.status;
     const email  = (info && info.payer && info.payer.email) ? info.payer.email : 'sem-email';
 
     if (status !== 'approved') {
       return { statusCode: 200, body: JSON.stringify({ ok:false, status }) };
     }
 
-    // aprovado → gera token e devolve link
-    const token = jwt.sign({ email }, secret, { expiresIn: '24h' });
+    const token = jwt.sign(
+      { email, aud:'labnivel', origin: siteUrl }, // trava de domínio
+      secret, { expiresIn:'24h' }
+    );
     const link  = `${siteUrl}/index.html?token=${token}`;
     return { statusCode: 200, body: JSON.stringify({ ok:true, link }) };
   } catch (e) {
