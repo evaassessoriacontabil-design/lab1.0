@@ -45,6 +45,11 @@
   /* Gênero */
   #gender .wrap{flex-direction:column;align-items:flex-end;justify-content:center;gap:18px}
 
+  /* Rodapé discreto */
+  footer{position:fixed;left:0;right:0;bottom:6px;text-align:center;font-size:12px;color:#999}
+  footer a{color:#bbb;text-decoration:none}
+  footer a:hover{text-decoration:underline}
+
   /* Mobile */
   @media (max-width:480px){
     .btn{font-size:20px;min-width:200px}
@@ -119,6 +124,7 @@
       <h2 id="r-title"></h2>
       <p id="r-desc"></p>
       <ul id="r-actions" class="actions"></ul>
+      <p style="margin-top:12px;color:#666;font-size:12px" id="wm"></p><!-- watermark -->
     </div>
     <div class="btn-row">
       <button id="r-course" class="btn-cta"></button>
@@ -127,11 +133,24 @@
   </div>
 </section>
 
+<footer>
+  <a href="/terms.html" target="_blank" rel="noopener">Termos de Uso</a> ·
+  <a href="/privacy.html" target="_blank" rel="noopener">Política de Privacidade</a>
+</footer>
+
 <!-- ÁUDIO -->
 <audio id="snd-click" src="sounds/click.mp3" preload="auto" playsinline></audio>
 <audio id="snd-win" src="sounds/win.mp3" preload="auto" playsinline></audio>
 
 <script>
+/* -------- Lock de domínio no cliente -------- */
+(function(){
+  const allowed = 'https://labnivel.netlify.app';
+  if (location.origin !== allowed && location.protocol !== 'file:') {
+    location.replace(allowed);
+  }
+})();
+
 /* -------- Navegação -------- */
 function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
@@ -139,16 +158,17 @@ function go(id){
 }
 
 /* -------- Token gating -------- */
-let isAuthorized = false;
+let isAuthorized = false, currentToken = '';
 async function validarAcessoSeHouverToken() {
   const token = new URLSearchParams(location.search).get("token");
   const localDev = location.protocol === 'file:' || location.hostname === 'localhost';
   if (localDev) { isAuthorized = true; return; }
   if (!token) { isAuthorized = false; return; }
   try {
-    const r = await fetch(`/.netlify/functions/validate-token?token=${encodeURIComponent(token)}`);
+    const r = await fetch(`/.netlify/functions/validate-token?token=${encodeURIComponent(token)}`, {cache:'no-store'});
     const d = await r.json();
     isAuthorized = !!(d && d.valido);
+    if (isAuthorized) currentToken = token;
   } catch { isAuthorized = false; }
 }
 function gateOr(fn){ return (...a)=> isAuthorized ? fn(...a) : (alert("Acesso restrito. Ative o jogo na Introdução e volte com o link de acesso."), go('intro')); }
@@ -235,15 +255,15 @@ const RESULTS={
   1:{title:"Nível 1 – Aventureiro 🚀",
      desc:"Parabéns pela coragem de dar o primeiro passo! Você, assim como eu, já saiu da ideia e partiu para a ação. Agora é hora de transformar entusiasmo em estratégia para construir uma base sólida e sustentável para o seu negócio.",
      actions:["Buscar apoio contábil e financeiro básico.","Fazer um curso introdutório de gestão.","Criar um plano de negócios simples.","Separar finanças pessoais das empresariais."],
-     avatarF:"images/nivel1-fem.png", avatarM:"images/nivel1-masc.png", course:"Ative o Laboratório 2.0"},
+     avatarF:"nivel1-fem.png", avatarM:"nivel1-masc.png", course:"Ative o Laboratório 2.0"},
   2:{title:"Nível 2 – Estrategista 📊",
      desc:"Você já pensa e age como um verdadeiro estrategista! Seu negócio demonstra organização e visão de crescimento. Agora é hora de fortalecer sua estratégia e desenvolver liderança para conquistar novos mercados.",
      actions:["Participar de mentorias com empresários experientes.","Investir em marketing estruturado e automação.","Acompanhar indicadores financeiros regularmente.","Desenvolver habilidades de liderança."],
-     avatarF:"images/nivel2-fem.png", avatarM:"images/nivel2-masc.png", course:"Ative o Laboratório 3.0"},
+     avatarF:"nivel2-fem.png", avatarM:"nivel2-masc.png", course:"Ative o Laboratório 3.0"},
   3:{title:"Nível 3 – Líder 🏆",
      desc:"Você alcançou a posição de líder! Sua visão inspira sua equipe e o mercado. Agora o desafio é inovar, expandir e preparar sucessores para perpetuar o legado da sua empresa.",
      actions:["Investir em inovação e tecnologia.","Expandir para novos mercados.","Formar e capacitar líderes internos.","Criar planos de sucessão e governança corporativa."],
-     avatarF:"images/nivel3-fem.png", avatarM:"images/nivel3-masc.png", course:"Ative o Laboratório 4.0"}
+     avatarF:"nivel3-fem.png", avatarM:"nivel3-masc.png", course:"Ative o Laboratório 4.0"}
 };
 
 /* -------- Estado e navegação -------- */
@@ -271,19 +291,36 @@ function renderQ(){
   });
 }
 
+/* -------- Utilidades -------- */
+function maskEmail(e){ if(!e) return ''; const [u,d]=e.split('@'); return (u?.slice(0,3)||'')+'***@'+(d||''); }
+
 /* -------- Final -------- */
 function finish(){
   let lvl = 1;
   if(state.score > 45) lvl = 3;
   else if(state.score > 27) lvl = 2;
   const res=RESULTS[lvl];
+
+  // Watermark de e-mail (decodifica payload do JWT sem chave)
+  const t = currentToken;
+  let email = '';
+  try{
+    if(t){ const payload = JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); email = payload.email || ''; }
+  }catch(e){}
+
   document.getElementById('r-title').textContent=res.title;
   document.getElementById('r-desc').textContent=res.desc;
   const ul=document.getElementById('r-actions'); ul.innerHTML="";
   res.actions.forEach(a=>{const li=document.createElement('li'); li.textContent="🔹 "+a; ul.appendChild(li);});
+  document.getElementById('wm').textContent = email ? ('Acesso: '+maskEmail(email)) : '';
+
+  // Avatar via assets protegidos
+  const avatar = (state.gender==='fem')?res.avatarF:res.avatarM;
+  const bg = "/.netlify/functions/assets?file="+encodeURIComponent(avatar)+"&token="+encodeURIComponent(currentToken);
+  document.getElementById('bg-result').style.backgroundImage="url('"+bg+"')";
+
   const rc=document.getElementById('r-course'); rc.textContent=res.course;
   rc.onclick = ()=>{ window.open('https://bit.ly/eva_acontabil', '_blank'); };
-  document.getElementById('bg-result').style.backgroundImage="url('"+(state.gender==='fem'?res.avatarF:res.avatarM)+"')";
   playWin(); go('result');
 }
 
@@ -300,12 +337,11 @@ function goAccessAndKeep(anchor){
       u.searchParams.get('preference-id');
     if (pref) localStorage.setItem('mp_pref_id', pref);
     const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
-    // Abre o checkout já pelo target="_blank"; aqui garantimos que ESTA aba vá validar
     setTimeout(function(){ window.location.href = '/acesso.html' + q; }, 0);
   }catch(e){
     setTimeout(function(){ window.location.href = '/acesso.html'; }, 0);
   }
-  return true; // mantém o comportamento do <a target="_blank">
+  return true;
 }
 </script>
 
