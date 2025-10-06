@@ -51,7 +51,7 @@
         const r = await fetch(url, { cache:'no-store' });
         const data = await r.json();
         if (data.ok && data.link){
-          location.replace(data.link); // jogo liberado
+          location.replace(data.link);
           return true;
         }else{
           statusEl.textContent = 'Pagamento: ' + (data.status || 'aguardando');
@@ -64,12 +64,12 @@
     }
 
     async function startPolling(){
-      if (await checkOnce()) return;           // primeira tentativa
+      if (await checkOnce()) return;
       let tries = 0;
       const tm = setInterval(async ()=>{
         tries++;
         const ok = await checkOnce();
-        if (ok || tries >= 60){                // 60 * 5s = 5 minutos
+        if (ok || tries >= 60){ // 60*5s = 5min
           clearInterval(tm);
           btn.style.display = ok ? 'none' : 'inline-block';
           if (!ok) statusEl.textContent = 'Ainda pendente. Você pode tentar de novo pelo botão.';
