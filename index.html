@@ -45,7 +45,7 @@
   /* Gênero */
   #gender .wrap{flex-direction:column;align-items:flex-end;justify-content:center;gap:18px}
 
-  /* Rodapé discreto */
+  /* Rodapé discreto (jurídico) */
   footer{position:fixed;left:0;right:0;bottom:6px;text-align:center;font-size:12px;color:#999}
   footer a{color:#bbb;text-decoration:none}
   footer a:hover{text-decoration:underline}
@@ -75,10 +75,12 @@
   <div class="bg" style="background-image:url('images/intro.png')"></div>
   <div class="wrap" style="align-items:flex-end;justify-content:flex-end">
     <!-- Mercado Pago — abre checkout em nova aba e ESTA aba vai para /acesso.html -->
-    <button class="btn" id="ativarBtn" type="button"
-      onclick="return payAndValidate('https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26');">
+    <a class="btn" id="ativarBtn"
+       target="_blank" rel="noopener"
+       href="https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=2484262675-2ba4593b-48de-448d-a7ab-e1756a222c26"
+       onclick="return goAccessAndKeep(this);">
       ATIVAR JOGO – R$29,90
-    </button>
+    </a>
   </div>
 </section>
 
@@ -122,7 +124,7 @@
       <h2 id="r-title"></h2>
       <p id="r-desc"></p>
       <ul id="r-actions" class="actions"></ul>
-      <p style="margin-top:12px;color:#666;font-size:12px" id="wm"></p>
+      <p style="margin-top:12px;color:#666;font-size:12px" id="wm"></p><!-- watermark com e-mail -->
     </div>
     <div class="btn-row">
       <button id="r-course" class="btn-cta"></button>
@@ -141,7 +143,7 @@
 <audio id="snd-win" src="sounds/win.mp3" preload="auto" playsinline></audio>
 
 <script>
-/* -------- Lock de domínio -------- */
+/* -------- Lock de domínio (cliente) -------- */
 (function(){
   const allowed = 'https://labnivel.netlify.app';
   if (location.origin !== allowed && location.protocol !== 'file:') {
@@ -312,7 +314,7 @@ function finish(){
   res.actions.forEach(a=>{const li=document.createElement('li'); li.textContent="🔹 "+a; ul.appendChild(li);});
   document.getElementById('wm').textContent = email ? ('Acesso: '+maskEmail(email)) : '';
 
-  // Avatares via assets protegidos (coloque os PNGs em /protected/)
+  /* Avatares via assets protegidos (coloque os PNGs em /protected/) */
   const avatar = (state.gender==='fem')?res.avatarF:res.avatarM;
   const bg = "/.netlify/functions/assets?file="+encodeURIComponent(avatar)+"&token="+encodeURIComponent(currentToken);
   document.getElementById('bg-result').style.backgroundImage="url('"+bg+"')";
@@ -325,33 +327,21 @@ function finish(){
 /* -------- Inicialização -------- */
 document.addEventListener('DOMContentLoaded', validarAcessoSeHouverToken);
 
-/* -------- INTRO: abre checkout em nova aba e ESTA aba vai para /acesso.html -------- */
-function payAndValidate(url){
+/* -------- INTRO: link abre nova aba; ESTA aba vai validar em /acesso.html -------- */
+function goAccessAndKeep(anchor){
   try{
-    const u = new URL(url);
+    const u = new URL(anchor.href);
     const pref =
       u.searchParams.get('pref_id') ||
       u.searchParams.get('preference_id') ||
       u.searchParams.get('preference-id');
-
     if (pref) localStorage.setItem('mp_pref_id', pref);
-
-    // abre nova aba de forma confiável
-    const win = window.open('about:blank','_blank','noopener');
-    if (win) {
-      // carrega o checkout na nova aba
-      win.location = url;
-      // esta aba: vai validar
-      const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
-      window.location.replace('/acesso.html' + q);
-    } else {
-      // fallback: se popup bloqueado, troca esta aba para o checkout e deixa o usuário voltar
-      window.location.href = url;
-    }
+    const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
+    setTimeout(()=>{ window.location.href = '/acesso.html' + q; }, 0);
   }catch(e){
-    window.location.href = url;
+    setTimeout(()=>{ window.location.href = '/acesso.html'; }, 0);
   }
-  return false;
+  return true; // mantém o comportamento do <a target="_blank">
 }
 </script>
 
