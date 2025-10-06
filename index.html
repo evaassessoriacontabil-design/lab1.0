@@ -172,7 +172,7 @@ const QUESTIONS = [
     w:[1,3,2,4]
   },
   { q:"Você separa as finanças pessoais das empresariais?",
-    a:["Separo e tenho DRE/orçamento; concilio tudo todo mês","Ainda misturo; estou organizando aos poucos","Separo, mas às vezes me atrapalho; uso planilha simples","Separação total com controles e automações financeiras"],
+    a:["Separo e tenho DRE/orçamento; concilio tudo todo mês","Ainda misturo; estou organizando aos poucos","Separo, mas às vezes me atrapalho; use planilha simples","Separação total com controles e automações financeiras"],
     w:[3,1,2,4]
   },
   { q:"Costuma tomar decisões mais na intuição ou em dados?",
@@ -284,21 +284,26 @@ function finish(){
 /* ---------- Inicialização ---------- */
 document.addEventListener('DOMContentLoaded', validarAcessoSeHouverToken);
 
-/* ---------- Clique do botão: abre checkout em nova aba e esta aba vai para /acesso.html ---------- */
+/* ---------- Clique da INTRO: abre checkout em nova aba e esta aba vai para /acesso.html ---------- */
 function payAndValidate(url){
   try{
     const u = new URL(url);
-    const pref = u.searchParams.get('pref_id') || u.searchParams.get('preference_id');
-    if (pref) localStorage.setItem('mp_pref_id', pref);   // fallback para a validação
+    // lê pref em todos os formatos: pref_id, preference_id, preference-id
+    const pref =
+      u.searchParams.get('pref_id') ||
+      u.searchParams.get('preference_id') ||
+      u.searchParams.get('preference-id');
+
+    if (pref) localStorage.setItem('mp_pref_id', pref);
 
     // 1) abre o checkout em nova aba (gesto do usuário → permitido)
     const win = window.open(url, '_blank', 'noopener');
 
-    // 2) nesta aba, vai para /acesso.html com o preference_id (para validar e redirecionar)
+    // 2) nesta aba, vai para /acesso.html com o preference_id (padrão com sublinhado)
     const q = pref ? ('?preference_id=' + encodeURIComponent(pref)) : '';
     window.location.href = '/acesso.html' + q;
 
-    // se o navegador bloquear pop-up, abre o checkout nesta mesma aba
+    // fallback se bloqueou pop-up
     if (!win || win.closed) window.location.href = url;
   }catch(e){
     window.open(url, '_blank', 'noopener');
