@@ -30,19 +30,22 @@
     function getPrefFromAnywhere(){
       const qs = new URLSearchParams(location.search);
       const payment_id = qs.get('payment_id') || qs.get('collection_id') || qs.get('id') || qs.get('data.id');
-      // lê também o formato "preference-id" (com hífen)
       const prefUrl   = qs.get('preference_id') || qs.get('pref_id') || qs.get('preference-id');
       const prefLS    = localStorage.getItem('mp_pref_id');
       return { payment_id, preference_id: prefUrl || prefLS || '' };
     }
 
-    async function checkOnce(){
+    function buildCheckUrl(){
+      const origin = location.origin || 'https://labnivel.netlify.app';
       const {payment_id, preference_id} = getPrefFromAnywhere();
       const p = new URLSearchParams();
       if (payment_id) p.set('payment_id', payment_id);
       if (!payment_id && preference_id) p.set('preference_id', preference_id);
+      return origin + '/.netlify/functions/check-access?' + p.toString();
+    }
 
-      const url = '/.netlify/functions/check-access?' + p.toString();
+    async function checkOnce(){
+      const url = buildCheckUrl();
       statusEl.textContent = 'Consultando status…';
       try{
         const r = await fetch(url, { cache:'no-store' });
@@ -66,7 +69,7 @@
       const tm = setInterval(async ()=>{
         tries++;
         const ok = await checkOnce();
-        if (ok || tries >= 24){                // 24 * 5s ≈ 2 minutos
+        if (ok || tries >= 60){                // 60 * 5s = 5 minutos
           clearInterval(tm);
           btn.style.display = ok ? 'none' : 'inline-block';
           if (!ok) statusEl.textContent = 'Ainda pendente. Você pode tentar de novo pelo botão.';
