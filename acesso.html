@@ -92,5 +92,16 @@
     startPolling();
   })();
   </script>
+  <script>
+(function(){
+  try {
+    const ok = JSON.parse(localStorage.getItem("labnivel_paid")||"null")?.ok;
+    if (!ok) location.replace("/");
+  } catch {
+    location.replace("/");
+  }
+})();
+</script>
+
 </body>
 </html>
