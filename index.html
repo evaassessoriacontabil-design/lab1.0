@@ -75,7 +75,29 @@
   <div class="bg" style="background-image:url('images/intro.png')"></div>
   <div class="wrap" style="align-items:flex-end;justify-content:flex-end">
     <button class="btn" id="ativarBtn" type="button" onclick="return createAndPay(this);">
-      ATIVAR JOGO – R$29,90
+    <script>
+function isPaid(){
+  try {
+    const v = JSON.parse(localStorage.getItem("labnivel_paid")||"null");
+    return v?.ok;
+  } catch { return false; }
+}
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  if (isPaid()) location.href="/acesso.html";
+
+  window.addEventListener("storage", (e)=>{
+    if (e.key === "labnivel_paid" && isPaid()) location.href="/acesso.html";
+  });
+});
+
+async function ativarJogo(){
+  const r = await fetch("/.netlify/functions/create-preference", { method:"POST" });
+  const d = await r.json();
+  window.open(d.init_point, "_blank");
+}
+</script>
+  ATIVAR JOGO – R$29,90
     </button>
   </div>
 </section>
