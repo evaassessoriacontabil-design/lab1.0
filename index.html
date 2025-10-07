@@ -5,7 +5,6 @@ function isPaid(){
   try { return JSON.parse(localStorage.getItem("labnivel_paid")||"null")?.ok === true; }
   catch { return false; }
 }
-
 window.addEventListener("DOMContentLoaded", ()=>{
   if (isPaid()) location.replace("/acesso.html");
   // Se pagar na outra aba, esta aba detecta e entra no jogo
@@ -29,7 +28,6 @@ async function ativarJogo(){
   }
 }
 </script>
-
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
