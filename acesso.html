@@ -10,6 +10,7 @@
     .spin{width:40px;height:40px;border:4px solid #444;border-top-color:#ff2d2d;border-radius:50%;margin:16px auto;animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .hint{color:#bbb;font-size:14px;margin-top:10px}
+    .diag{color:#666;font-size:12px;margin-top:6px}
     .btn{background:#ff2d2d;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
   </style>
 </head>
@@ -19,28 +20,32 @@
     <div class="spin"></div>
     <p>Isso leva só alguns segundos. Você será redirecionada automaticamente.</p>
     <p class="hint" id="status"></p>
+    <p class="diag" id="diag"></p>
     <button class="btn" id="forcar" style="display:none">Liberar acesso agora</button>
   </div>
 
   <script>
   (function(){
     const statusEl = document.getElementById('status');
-    const btn = document.getElementById('forcar');
+    const diagEl   = document.getElementById('diag');
+    const btn      = document.getElementById('forcar');
 
-    function getPrefFromAnywhere(){
+    function getParams(){
       const qs = new URLSearchParams(location.search);
       const payment_id = qs.get('payment_id') || qs.get('collection_id') || qs.get('id') || qs.get('data.id');
-      const prefUrl   = qs.get('preference_id') || qs.get('pref_id') || qs.get('preference-id');
-      const prefLS    = localStorage.getItem('mp_pref_id');
+      const prefUrl    = qs.get('preference_id') || qs.get('pref_id') || qs.get('preference-id');
+      const prefLS     = localStorage.getItem('mp_pref_id');
       return { payment_id, preference_id: prefUrl || prefLS || '' };
     }
 
     function buildCheckUrl(){
       const origin = location.origin || 'https://labnivel.netlify.app';
-      const {payment_id, preference_id} = getPrefFromAnywhere();
+      const { payment_id, preference_id } = getParams();
       const p = new URLSearchParams();
       if (payment_id) p.set('payment_id', payment_id);
       if (!payment_id && preference_id) p.set('preference_id', preference_id);
+      // modo diagnóstico
+      p.set('debug','1');
       return origin + '/.netlify/functions/check-access?' + p.toString();
     }
 
@@ -50,15 +55,21 @@
       try{
         const r = await fetch(url, { cache:'no-store' });
         const data = await r.json();
-        if (data.ok && data.link){
-          location.replace(data.link);
-          return true;
-        }else{
-          statusEl.textContent = 'Pagamento: ' + (data.status || 'aguardando');
-          return false;
+
+        // mostra status e diagnóstico leve (passo/hints)
+        statusEl.textContent = 'Pagamento: ' + (data.status || (data.ok?'approved':'aguardando'));
+        if (data.diag) {
+          const { step, mo, search, payLookup, fromQuery } = data.diag;
+          diagEl.textContent = `diag: ${step || ''} ${mo || ''} ${search || ''} ${payLookup || ''} ${fromQuery ? '(pid da URL)' : ''}`.trim();
         }
+
+        if (data.ok && data.link){
+          location.replace(data.link); // jogo liberado
+          return true;
+        }
+        return false;
       }catch(e){
-        statusEl.textContent = 'Falha na consulta. Tentaremos de novo.';
+        statusEl.textContent = 'Falha na consulta. Tentaremos novamente.';
         return false;
       }
     }
@@ -72,7 +83,7 @@
         if (ok || tries >= 60){ // 60*5s = 5min
           clearInterval(tm);
           btn.style.display = ok ? 'none' : 'inline-block';
-          if (!ok) statusEl.textContent = 'Ainda pendente. Você pode tentar de novo pelo botão.';
+          if (!ok) statusEl.textContent = 'Ainda pendente. Você pode tentar novamente pelo botão.';
         }
       }, 5000);
     }
