@@ -1,5 +1,35 @@
 <!doctype html>
 <html lang="pt-BR">
+  <script>
+function isPaid(){
+  try { return JSON.parse(localStorage.getItem("labnivel_paid")||"null")?.ok === true; }
+  catch { return false; }
+}
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  if (isPaid()) location.replace("/acesso.html");
+  // Se pagar na outra aba, esta aba detecta e entra no jogo
+  window.addEventListener("storage", (e)=>{
+    if (e.key === "labnivel_paid" && isPaid()) location.replace("/acesso.html");
+  });
+});
+
+async function ativarJogo(){
+  try{
+    const r = await fetch("/.netlify/functions/mp-create-preference", { method:"POST" });
+    const d = await r.json();
+    if (d.init_point) {
+      window.open(d.init_point, "_blank"); // checkout em nova aba
+      // opcional: mostrar "Validando..." aqui
+    } else {
+      alert("Falha ao iniciar pagamento.");
+    }
+  } catch {
+    alert("Erro ao iniciar pagamento.");
+  }
+}
+</script>
+
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
