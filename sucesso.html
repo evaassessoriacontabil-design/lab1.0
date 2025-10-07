@@ -1,31 +1,33 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Pagamento confirmado</title>
-<style>
-body {font-family: Arial, sans-serif; margin: 40px; text-align: center;}
-</style>
-</head>
-<body>
-  <h1>Validando pagamento...</h1>
-  <p>Aguarde um momento.</p>
-  <script>
-    (async ()=>{
-      const qs = new URLSearchParams(location.search);
-      const payment_id = qs.get("payment_id") || qs.get("collection_id");
-      if (!payment_id) return alert("Pagamento não identificado.");
+<script>
+(async ()=>{
+  const qs = new URLSearchParams(location.search);
+  const payment_id = qs.get("payment_id") || qs.get("collection_id");
+  if (!payment_id) {
+    alert("Pagamento não identificado.");
+    location.replace("/");
+    return;
+  }
 
-      const r = await fetch(`/.netlify/functions/verify?payment_id=${payment_id}`);
-      const data = await r.json();
+  try {
+    const resp = await fetch(`/.netlify/functions/check-access?payment_id=${encodeURIComponent(payment_id)}`);
+    const data = await resp.json();
 
-      if (data.ok){
-        localStorage.setItem("labnivel_paid", JSON.stringify({ok:true,at:Date.now()}));
-        window.location.replace("/acesso.html");
-      } else {
-        document.body.innerHTML = `<h2>Pagamento não aprovado</h2><p>Status: ${data.status}</p><a href="/">Voltar</a>`;
-      }
-    })();
-  </script>
-</body>
-</html>
+    if (data.ok) {
+      localStorage.setItem("labnivel_paid", JSON.stringify({ ok: true, at: Date.now() }));
+      // se abriu em nova aba, tenta fechar depois
+      setTimeout(()=>{ try{ window.close(); }catch(_){} }, 1200);
+      location.replace("/acesso.html");
+    } else {
+      document.body.innerHTML = `
+        <h2>Pagamento não aprovado</h2>
+        <p>Status: ${data.status || "desconhecido"}</p>
+        <p><a href="/">Voltar</a></p>`;
+    }
+  } catch (e) {
+    document.body.innerHTML = `
+      <h2>Erro ao validar</h2>
+      <pre>${String(e).slice(0,200)}</pre>
+      <p><a href="/">Voltar</a></p>`;
+  }
+})();
+</script>
