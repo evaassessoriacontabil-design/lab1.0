@@ -1,52 +1,34 @@
-// netlify/functions/mp-create-preference.js
-// Cria uma preferência NOVA no Mercado Pago a cada clique.
-// Requer envs: MP_ACCESS_TOKEN, SITE_URL
-const site = process.env.SITE_URL || 'https://labnivel.netlify.app';
-
-exports.handler = async () => {
+export async function handler(event) {
   try {
-    const token = process.env.MP_ACCESS_TOKEN;
-    if (!token) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'MP_ACCESS_TOKEN ausente' }) };
-    }
+    const MP_TOKEN = process.env.MP_ACCESS_TOKEN;
+    const SITE_URL = process.env.SITE_URL || "https://labnivel.netlify.app";
+    const body = JSON.parse(event.body || "{}");
+    const amount = Number(body.amount || 29.9);
 
-    // corpo da preferência (Checkout Pro)
-    const body = {
-      items: [
-        { title: 'Ativar Jogo – Laboratório 1.0', quantity: 1, unit_price: 29.90, currency_id: 'BRL' }
-      ],
-      binary_mode: true,
-      auto_return: 'approved',
-      notification_url: `${site}/.netlify/functions/mp-webhook`,
-      back_urls: {
-        success: `${site}/acesso.html`,
-        pending: `${site}/acesso.html`,
-        failure: `${site}/index.html#falhou`
-      },
-      // opcionalmente: expires/expiration_date_from/_to
-      statement_descriptor: 'LABNIVEL'
-    };
-
-    const resp = await fetch('https://api.mercadopago.com/checkout/preferences', {
-      method: 'POST',
+    const resp = await fetch("https://api.mercadopago.com/checkout/preferences", {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        "Authorization": `Bearer ${MP_TOKEN}`,
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        items: [{ title: "Ativar Jogo Lab Nível", quantity: 1, unit_price: amount, currency_id: "BRL" }],
+        back_urls: {
+          success: `${SITE_URL}/sucesso.html`,
+          failure: `${SITE_URL}/erro.html`,
+          pending: `${SITE_URL}/pendente.html`
+        },
+        auto_return: "approved",
+        notification_url: `${SITE_URL}/.netlify/functions/mp-webhooks`,
+        binary_mode: true,
+        statement_descriptor: "LABNIVEL"
+      })
     });
+
     const data = await resp.json();
-
-    if (!resp.ok || !data.init_point) {
-      return { statusCode: 500, body: JSON.stringify({ error: 'Falha ao criar preferência', detail: data }) };
-    }
-
-    // devolvemos init_point (link do checkout) e o preference_id
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ ok: true, init_point: data.init_point, preference_id: data.id })
-    };
+    if (!resp.ok) throw new Error(JSON.stringify(data));
+    return { statusCode: 200, body: JSON.stringify({ init_point: data.init_point, preference_id: data.id }) };
   } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'exception', detail: String(e) }) };
+    return { statusCode: 500, body: JSON.stringify({ error: String(e) }) };
   }
-};
+}
