@@ -43,5 +43,5 @@ module.exports.handler = async (event) => {
   const token = jwt.sign({ email }, secret, { expiresIn: '24h' });
   const link  = `${siteUrl}/index.html?token=${token}`;
 
-  return { statusCode: 200, body: JSON.stringify({ ok: true, token, link }) };{ "ok": true, "token": "<jwt>" }
+  return { statusCode: 200, body: JSON.stringify({ ok: true, token, link }) };{ "ok": true, "token": "<jwt>" };{ "ok": false, "pending": true }
 };
