@@ -31,4 +31,4 @@ export async function handler(event) {
   } catch (e) {
     return { statusCode: 500, body: JSON.stringify({ error: String(e) }) };
   }
-}
+}{ "ok": true, "preference_id": "<id>", "init_point": "<url>" }
