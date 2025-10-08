@@ -19,5 +19,6 @@ module.exports.handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ valido:true }) };
   } catch {
     return { statusCode: 200, body: JSON.stringify({ valido:false }) };
-  }
-};
+  { "valido": true, "email": "foo@bar.com" }
+{ "valido": false }
+  };
