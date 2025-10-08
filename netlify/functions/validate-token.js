@@ -1,24 +1,36 @@
-// CommonJS
-const jwt = require('jsonwebtoken');
+// netlify/functions/validate-token.js
+const crypto = require('crypto');
 
-module.exports.handler = async (event) => {
-  const token = (event.queryStringParameters && event.queryStringParameters.token) || '';
-  const secret = process.env.ACCESS_TOKEN_SECRET;
-  const site   = process.env.SITE_URL || 'https://labnivel.netlify.app';
+function fromB64u(s){ s = s.replace(/-/g,'+').replace(/_/g,'/'); return Buffer.from(s, 'base64').toString('utf8'); }
+function signHS256(input, secret){
+  return crypto.createHmac('sha256', secret).update(input).digest('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
 
-  if (!secret) {
-    return { statusCode: 500, body: JSON.stringify({ valido:false, error:'ACCESS_TOKEN_SECRET não configurado' }) };
+exports.handler = async (event) => {
+  const origin = process.env.SITE_URL || '*';
+  try{
+    const token = (event.queryStringParameters && event.queryStringParameters.token) || '';
+    if(!token || token.split('.').length !== 3) throw new Error('missing token');
+
+    const [h,p,s] = token.split('.');
+    const secret = process.env.ACCESS_TOKEN_SECRET || 'devsecret';
+    const expect = signHS256(`${h}.${p}`, secret);
+    if (s !== expect) throw new Error('bad signature');
+
+    const payload = JSON.parse(fromB64u(p));
+    const now = Math.floor(Date.now()/1000);
+    if (payload.exp && payload.exp < now) throw new Error('expired');
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type':'application/json', 'Access-Control-Allow-Origin': origin },
+      body: JSON.stringify({ valido: true, email: payload.email || '' })
+    };
+  }catch(e){
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type':'application/json', 'Access-Control-Allow-Origin': origin },
+      body: JSON.stringify({ valido: false })
+    };
   }
-
-  try {
-    const data = jwt.verify(token, secret);
-    // trava por domínio/aplicação
-    if (data.aud !== 'labnivel' || (data.origin && data.origin !== site)) {
-      return { statusCode: 200, body: JSON.stringify({ valido:false }) };
-    }
-    return { statusCode: 200, body: JSON.stringify({ valido:true }) };
-  } catch {
-    return { statusCode: 200, body: JSON.stringify({ valido:false }) };
-  { "valido": true, "email": "foo@bar.com" }
-{ "valido": false }
-  };
+};
