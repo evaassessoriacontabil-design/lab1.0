@@ -1,8 +1,13 @@
 [build]
-  functions = "netlify/functions"
-  publish = "."
+functions = "netlify/functions"
+publish = "."
 
+[functions]
+node_bundler = "esbuild"
+included_files = ["protected/**"]
+
+# (opcional; ajuda em ambientes que exigem a rota explícita)
 [[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+from = "/.netlify/functions/*"
+to   = "/.netlify/functions/:splat"
+status = 200
