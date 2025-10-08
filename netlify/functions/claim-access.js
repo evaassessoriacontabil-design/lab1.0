@@ -1,61 +1,48 @@
-const jwt = require('jsonwebtoken');
+// netlify/functions/claim-access.js
+const crypto = require('crypto');
 
-module.exports.handler = async (event) => {
+function b64u(objOrBuf) {
+  const buf = Buffer.isBuffer(objOrBuf) ? objOrBuf : Buffer.from(JSON.stringify(objOrBuf));
+  return buf.toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function signHS256(input, secret) {
+  return b64u(crypto.createHmac('sha256', secret).update(input).digest());
+}
+function makeJWT(payload, secret) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const body = { ...payload, iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000) + 60*60*24*3 }; // 3 dias
+  const h = b64u(header);
+  const p = b64u(body);
+  const s = signHS256(`${h}.${p}`, secret);
+  return `${h}.${p}.${s}`;
+}
+
+exports.handler = async (event) => {
   try {
-    const qs = event.queryStringParameters || {};
-    const siteUrl = process.env.SITE_URL || 'https://labnivel.netlify.app';
-    const mpToken = process.env.MP_ACCESS_TOKEN;
-    const secret  = process.env.ACCESS_TOKEN_SECRET;
+    const origin = process.env.SITE_URL || '*';
+    const pref = (event.queryStringParameters && event.queryStringParameters.preference_id) || '';
 
-    if (!mpToken || !secret) {
-      return { statusCode: 500, body: 'Config ausente (MP_ACCESS_TOKEN / ACCESS_TOKEN_SECRET).' };
+    // MODO TESTE: qualquer preferência que comece com TESTE libera imediatamente
+    if (/^TESTE/i.test(pref)) {
+      const token = makeJWT({ email: 'teste@exemplo.com', pref }, process.env.ACCESS_TOKEN_SECRET || 'devsecret');
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin },
+        body: JSON.stringify({ ok: true, token })
+      };
     }
 
-    let paymentId = qs.payment_id || qs.collection_id || qs['data.id'] || qs.id;
-
-    if (!paymentId && (qs.preference_id || qs.pref_id || qs['preference-id'])) {
-      const pref = qs.preference_id || qs.pref_id || qs['preference-id'];
-      try {
-        const moResp = await fetch(
-          `https://api.mercadopago.com/merchant_orders/search?preference_id=${encodeURIComponent(pref)}`,
-          { headers: { Authorization: `Bearer ${mpToken}` } }
-        );
-        const mo = await moResp.json();
-        const order = mo && mo.elements && mo.elements[0];
-        if (order && Array.isArray(order.payments) && order.payments.length > 0) {
-          order.payments.sort((a,b)=>new Date(b.date_created)-new Date(a.date_created));
-          if (order.payments[0].id) paymentId = order.payments[0].id;
-        }
-      } catch (e) {}
-    }
-
-    if (!paymentId) {
-      return { statusCode: 302, headers: { Location: `${siteUrl}/index.html#faltou-id` } };
-    }
-
-    const payResp = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: { Authorization: `Bearer ${mpToken}` }
-    });
-    const info = await payResp.json();
-    if (payResp.status !== 200) {
-      return { statusCode: 302, headers: { Location: `${siteUrl}/index.html#erro-consulta` } };
-    }
-
-    const status = info.status;
-    const email  = (info && info.payer && info.payer.email) ? info.payer.email : 'sem-email';
-
-    if (status !== 'approved') {
-      return { statusCode: 302, headers: { Location: `${siteUrl}/index.html#pagamento-${status||'desconhecido'}` } };
-    }
-
-    const token = jwt.sign(
-      { email, aud:'labnivel', origin: siteUrl },
-      secret, { expiresIn:'24h' }
-    );
-    const link  = `${siteUrl}/index.html?token=${token}`;
-    return { statusCode: 302, headers: { Location: link } };
-
+    // PRODUÇÃO (placeholder): enquanto não integramos o webhook/banco, sinalize pendente
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': origin },
+      body: JSON.stringify({ ok: false, pending: true })
+    };
   } catch (e) {
-    return { statusCode: 302, headers: { Location: '/index.html#erro-inesperado' } };
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ ok:false, error: 'claim-access failed', detail: String(e) })
+    };
   }
 };
