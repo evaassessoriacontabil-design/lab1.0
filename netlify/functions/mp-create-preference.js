@@ -1,10 +1,10 @@
 // netlify/functions/mp-create-preference.js
-const fetch = require('node-fetch');
 
 exports.handler = async () => {
   try {
     const accessToken = process.env.MP_ACCESS_TOKEN;
     const siteUrl = process.env.SITE_URL || 'https://labnivel.netlify.app';
+
     if (!accessToken) {
       return {
         statusCode: 500,
@@ -12,8 +12,7 @@ exports.handler = async () => {
       };
     }
 
-    // Cria preferência no Mercado Pago
-    const body = {
+    const prefBody = {
       items: [
         {
           title: 'Ativação do Jogo Laboratório Contábil',
@@ -39,7 +38,7 @@ exports.handler = async () => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(prefBody)
     });
 
     const data = await r.json();
@@ -53,16 +52,17 @@ exports.handler = async () => {
           init_point: data.init_point
         })
       };
-    } else {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ ok: false, error: data })
-      };
     }
+
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: data || 'Erro ao criar preferência' })
+    };
+
   } catch (e) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ ok: false, error: e.message })
+      body: JSON.stringify({ ok: false, error: String(e) })
     };
   }
 };
