@@ -66,8 +66,8 @@
 <section id="cover" class="screen show">
   <div class="bg" style="background-image:url('images/capa.png')"></div>
   <div class="wrap" style="align-items:flex-end;justify-content:flex-end">
-    <button class="btn" onclick="go('intro')">🎮 VAMOS JOGAR</button>
-  </div>
+    <<button class="btn" onclick="enterGame()">🎮 VAMOS JOGAR</button>
+ </div>
 </section>
 
 <!-- INTRODUÇÃO -->
@@ -147,22 +147,63 @@
 
 /* Navegação */
 function go(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show')); document.getElementById(id).classList.add('show'); }
+<script>
+// ...
+
+/* Navegação */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+
+/* Entrar no jogo respeitando o acesso */
+function enterGame(){
+  playClick();
+  if (isAuthorized) {
+    go('gender');
+  } else {
+    go('intro');
+  }
+}
+function go(id){
+  if (id === 'intro' && isAuthorized) { id = 'gender'; } // evita cair na intro autorizado
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+
+/* Ajustes de UI quando o acesso for liberado */
+function updateUIAuthorized(){
+  try{
+    const btn = document.getElementById('ativarBtn');
+    if (btn) btn.style.display = isAuthorized ? 'none' : '';
+    // Se por algum motivo estiver na INTRO já autorizado, manda para GÊNERO
+    const introShown = document.getElementById('intro')?.classList.contains('show');
+    if (isAuthorized && introShown) go('gender');
+  }catch(e){}
+}
+</script>
 
 /* Token gating */
 let isAuthorized=false, currentToken='';
 async function validarAcessoSeHouverToken(){
-  const token=new URLSearchParams(location.search).get("token");
-  const localDev=(location.protocol==='file:'||location.hostname==='localhost');
-  if(localDev){ isAuthorized=true; return; }
-  if(!token){ isAuthorized=false; return; }
+  async function validarAcessoSeHouverToken(){
+  const token = new URLSearchParams(location.search).get("token");
+  const localDev = (location.protocol==='file:'||location.hostname==='localhost');
+  if(localDev){ isAuthorized=true; updateUIAuthorized(); return; }
+  if(!token){ isAuthorized=false; updateUIAuthorized(); return; }
   try{
-    const r=await fetch(`/.netlify/functions/validate-token?token=${encodeURIComponent(token)}`,{cache:'no-store'});
-    const d=await r.json(); isAuthorized=!!(d&&d.valido); if(isAuthorized) currentToken=token;
-  }catch{ isAuthorized=false; }
+    const r = await fetch(`/.netlify/functions/validate-token?token=${encodeURIComponent(token)}`, { cache:'no-store' });
+    const d = await r.json();
+    isAuthorized = !!(d && d.valido);
+    if (isAuthorized) currentToken = token;
+  }catch{
+    isAuthorized = false;
+  }
+  updateUIAuthorized();
 }
-function gateOr(fn){ return (...a)=> isAuthorized ? fn(...a) : (alert("Acesso restrito. Ative o jogo na Introdução e volte com o link de acesso."), go('intro')); }
-
-/* Áudio */
+document.addEventListener('DOMContentLoaded', validarAcessoSeHouverToken);
+  
+  /* Áudio */
 const clickSound=document.getElementById('snd-click'); const winSound=document.getElementById('snd-win');
 function playClick(){ try{ clickSound.currentTime=0; clickSound.play(); }catch(e){} }
 function playWin(){ try{ winSound.currentTime=0; winSound.play(); }catch(e){} }
