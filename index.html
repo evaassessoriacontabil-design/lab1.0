@@ -184,11 +184,6 @@ document.addEventListener('pointerdown',unlockAudio,{passive:true,once:true});
 
 /* Quiz */
 const QUESTIONS=[
-<script>
-/* ... mantém tudo que já está acima ... */
-
-/* Quiz */
-const QUESTIONS = [
   { q:"Você já possui um plano de negócios estruturado?", a:["Rascunho em andamento, usamos como referência quando necessário","Sim, completo, revisado e usado nas decisões","Ainda não; organizo a ideia em anotações soltas","Versão enxuta com metas e orçamento básico, atualizada às vezes"], w:[2,4,1,3] },
   { q:"Sua empresa tem metas claras e mensuráveis para os próximos meses?", a:["Não formalizamos metas; trabalhamos no que aparece","Acompanhamos OKRs/SMART com rituais de revisão","Metas básicas mensais (faturamento/clientes), revisão ocasional","Metas SMART por área, revisadas com indicadores semanais"], w:[1,3,2,4] },
   { q:"Você separa as finanças pessoais das empresariais?", a:["Separo e tenho DRE/orçamento; concilio tudo todo mês","Ainda misturo; estou organizando aos poucos","Separo, mas às vezes me atrapalho; use planilha simples","Separação total com controles e automações financeiras"], w:[3,1,2,4] },
@@ -205,7 +200,6 @@ const QUESTIONS = [
   { q:"Você dedica parte do seu tempo a pensar em expansão ou novos mercados?", a:["Exploramos oportunidades com metas e pesquisas formais","Plano de expansão com cronograma e budget","Penso nisso quando sobra tempo","Estudo ideias e faço testes menores para validar"], w:[3,4,1,2] },
   { q:"Se você se ausentar por alguns dias, o negócio continua funcionando sem parar?", a:["Sim, por semanas: processos e líderes tocam a operação","Sim, por alguns dias com pequenas dependências","Parcialmente; preciso estar por perto para decidir pontos-chave","Ainda não; a operação depende muito de mim"], w:[4,2,3,1] }
 ];
-
 const RESULTS = {
   1:{title:"Nível 1 – Aventureiro 🚀",desc:"Parabéns pela coragem de dar o primeiro passo! Você, assim como eu, já saiu da ideia e partiu para a ação. Agora é hora de transformar entusiasmo em estratégia para construir uma base sólida e sustentável para o seu negócio.",actions:["Buscar apoio contábil e financeiro básico.","Fazer um curso introdutório de gestão.","Criar um plano de negócios simples.","Separar finanças pessoais das empresariais."],avatarF:"nivel1-fem.png",avatarM:"nivel1-masc.png",course:"Ative o Laboratório 2.0"},
   2:{title:"Nível 2 – Estrategista 📊",desc:"Você já pensa e age como um verdadeiro estrategista! Seu negócio demonstra organização e visão de crescimento. Agora é hora de fortalecer sua estratégia e desenvolver liderança para conquistar novos mercados.",actions:["Participar de mentorias com empresários experientes.","Investir em marketing estruturado e automação.","Acompanhar indicadores financeiros regularmente.","Desenvolver habilidades de liderança."],avatarF:"nivel2-fem.png",avatarM:"nivel2-masc.png",course:"Ative o Laboratório 3.0"},
