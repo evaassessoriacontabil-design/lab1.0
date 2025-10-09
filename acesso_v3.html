@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aguardando confirmação do pagamento — v3</title>
+  <style>
+    html,body{height:100%;margin:0;background:#0a0a0a;color:#fff;font-family:Arial,system-ui}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{max-width:560px;background:#111;border-radius:12px;padding:22px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+    h1{margin:0 0 8px;font-size:22px}
+    p{margin:8px 0 0;color:#bbb}.small{font-size:12px;color:#888;margin-top:14px}
+    .btn{margin-top:18px;background:#ff2d2d;border:0;border-radius:10px;color:#fff;padding:12px 18px;cursor:pointer;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Validando pagamento… (v3)</h1>
+      <p id="status">Aguardando confirmação do pagamento…</p>
+      <p class="small" id="hint"></p>
+      <button class="btn" id="retry" style="display:none">Tentar novamente</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const pref = qs.get('preference_id') || '';
+  const statusEl = document.getElementById('status');
+  const hintEl = document.getElementById('hint');
+  const retryBtn = document.getElementById('retry');
+
+  hintEl.textContent = pref ? ('ID da preferência: ' + pref) : 'Sem preference_id';
+
+  if (!pref){
+    statusEl.textContent = 'Não localizamos sua preferência.';
+    retryBtn.style.display='inline-block';
+    retryBtn.onclick = ()=> location.href = '/';
+    return;
+  }
+
+  // 🔒 Nunca cria preferência aqui. Apenas consulta o backend.
+  let tries = 0, maxTries = 75; // ~5min
+  (async function tick(){
+    tries++;
+    try{
+      const r = await fetch('/.netlify/functions/claim-access?preference_id=' + encodeURIComponent(pref), { cache:'no-store' });
+      const d = await r.json();
+      if (d && d.ok && d.token){
+        location.replace('/?token=' + encodeURIComponent(d.token));
+        return;
+      }
+      statusEl.textContent = (d && d.pending) ? 'Pagamento localizado. Aguardando aprovação…' : 'Aguardando confirmação do pagamento…';
+    }catch(e){
+      statusEl.textContent = 'Conexão temporariamente indisponível. Tentando novamente…';
+    }
+    if (tries < maxTries) setTimeout(tick, 4000);
+    else {
+      statusEl.textContent = 'Demorou mais que o normal para confirmar.';
+      retryBtn.style.display='inline-block';
+      retryBtn.onclick = ()=> location.reload();
+    }
+  })();
+})();
+</script>
+</body>
+</html>
