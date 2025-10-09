@@ -111,7 +111,6 @@ footer a:hover{text-decoration:underline}
     </div>
   </div>
 </section>
-
 <footer>
   <a href="/terms.html" target="_blank" rel="noopener">Termos de Uso</a> ·
   <a href="/privacy.html" target="_blank" rel="noopener">Política de Privacidade</a>
@@ -120,7 +119,6 @@ footer a:hover{text-decoration:underline}
 <!-- ÁUDIO -->
 <audio id="snd-click" src="sounds/click.mp3" preload="auto" playsinline></audio>
 <audio id="snd-win" src="sounds/win.mp3" preload="auto" playsinline></audio>
-
 <script>
 /* Lock de domínio */
 (function(){
@@ -134,14 +132,12 @@ function go(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
   document.getElementById(id).classList.add('show');
 }
-
 /* Entrar respeitando o acesso */
 function enterGame(){
   playClick();
   if(isAuthorized) go('gender');
   else go('intro');
 }
-
 /* Ajustes de interface quando liberado */
 function updateUIAuthorized(){
   const btn=document.getElementById('ativarBtn');
@@ -149,7 +145,6 @@ function updateUIAuthorized(){
   const introShown=document.getElementById('intro')?.classList.contains('show');
   if(isAuthorized && introShown) go('gender');
 }
-
 /* Token gating */
 let isAuthorized=false, currentToken='';
 async function validarAcessoSeHouverToken(){
@@ -165,7 +160,6 @@ async function validarAcessoSeHouverToken(){
   }catch{ isAuthorized=false; }
   updateUIAuthorized();
 }
-
 /* Áudio */
 const clickSound=document.getElementById('snd-click');
 const winSound=document.getElementById('snd-win');
@@ -181,7 +175,6 @@ function unlockAudio(){
 }
 document.addEventListener('touchstart',unlockAudio,{passive:true,once:true});
 document.addEventListener('pointerdown',unlockAudio,{passive:true,once:true});
-
 /* Quiz */
 const QUESTIONS=[
   { q:"Você já possui um plano de negócios estruturado?", a:["Rascunho em andamento, usamos como referência quando necessário","Sim, completo, revisado e usado nas decisões","Ainda não; organizo a ideia em anotações soltas","Versão enxuta com metas e orçamento básico, atualizada às vezes"], w:[2,4,1,3] },
