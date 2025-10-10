@@ -111,6 +111,7 @@ footer a:hover{text-decoration:underline}
     </div>
   </div>
 </section>
+
 <footer>
   <a href="/terms.html" target="_blank" rel="noopener">Termos de Uso</a> ·
   <a href="/privacy.html" target="_blank" rel="noopener">Política de Privacidade</a>
@@ -118,7 +119,8 @@ footer a:hover{text-decoration:underline}
 
 <!-- ÁUDIO -->
 <audio id="snd-click" src="sounds/click.mp3" preload="auto" playsinline></audio>
-<audio id="snd-win" src="sounds/win.mp3" preload="auto" playsinline></audio>
+<audio id="snd-win"   src="sounds/win.mp3"   preload="auto" playsinline></audio>
+
 <script>
 /* Lock de domínio */
 (function(){
@@ -126,25 +128,27 @@ footer a:hover{text-decoration:underline}
   if(location.origin!==allowed && location.protocol!=='file:'){ location.replace(allowed); }
 })();
 
-/* Navegação básica */
+/* Navegação básica (protege contra intro quando autorizado) */
 function go(id){
   if(id==='intro' && isAuthorized) id='gender';
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
   document.getElementById(id).classList.add('show');
 }
+
 /* Entrar respeitando o acesso */
 function enterGame(){
   playClick();
-  if(isAuthorized) go('gender');
-  else go('intro');
+  if(isAuthorized) go('gender'); else go('intro');
 }
-/* Ajustes de interface quando liberado */
+
+/* UI quando liberar */
 function updateUIAuthorized(){
   const btn=document.getElementById('ativarBtn');
   if(btn) btn.style.display=isAuthorized?'none':'';
-  const introShown=document.getElementById('intro')?.classList.contains('show');
-  if(isAuthorized && introShown) go('gender');
+  const onIntro=document.getElementById('intro')?.classList.contains('show');
+  if(isAuthorized && onIntro) go('gender');
 }
+
 /* Token gating */
 let isAuthorized=false, currentToken='';
 async function validarAcessoSeHouverToken(){
@@ -160,26 +164,28 @@ async function validarAcessoSeHouverToken(){
   }catch{ isAuthorized=false; }
   updateUIAuthorized();
 }
+
 /* Áudio */
 const clickSound=document.getElementById('snd-click');
-const winSound=document.getElementById('snd-win');
-function playClick(){try{clickSound.currentTime=0;clickSound.play();}catch(e){}}
-function playWin(){try{winSound.currentTime=0;winSound.play();}catch(e){}}
+const winSound  =document.getElementById('snd-win');
+function playClick(){ try{ clickSound.currentTime=0; clickSound.play(); }catch(e){} }
+function playWin(){   try{ winSound.currentTime=0;   winSound.play();   }catch(e){} }
 let audioUnlocked=false;
 function unlockAudio(){
   if(audioUnlocked) return;
   [clickSound,winSound].forEach(a=>{
-    try{a.muted=true;a.play().then(()=>{a.pause();a.currentTime=0;a.muted=false;}).catch(()=>{})}catch(e){}
+    try{ a.muted=true; a.play().then(()=>{a.pause();a.currentTime=0;a.muted=false;}).catch(()=>{}) }catch(e){}
   });
   audioUnlocked=true;
 }
 document.addEventListener('touchstart',unlockAudio,{passive:true,once:true});
 document.addEventListener('pointerdown',unlockAudio,{passive:true,once:true});
-/* Quiz */
-const QUESTIONS=[
+
+/* Perguntas */
+const QUESTIONS = [
   { q:"Você já possui um plano de negócios estruturado?", a:["Rascunho em andamento, usamos como referência quando necessário","Sim, completo, revisado e usado nas decisões","Ainda não; organizo a ideia em anotações soltas","Versão enxuta com metas e orçamento básico, atualizada às vezes"], w:[2,4,1,3] },
   { q:"Sua empresa tem metas claras e mensuráveis para os próximos meses?", a:["Não formalizamos metas; trabalhamos no que aparece","Acompanhamos OKRs/SMART com rituais de revisão","Metas básicas mensais (faturamento/clientes), revisão ocasional","Metas SMART por área, revisadas com indicadores semanais"], w:[1,3,2,4] },
-  { q:"Você separa as finanças pessoais das empresariais?", a:["Separo e tenho DRE/orçamento; concilio tudo todo mês","Ainda misturo; estou organizando aos poucos","Separo, mas às vezes me atrapalho; use planilha simples","Separação total com controles e automações financeiras"], w:[3,1,2,4] },
+  { q:"Você separa as finanças pessoais das empresariais?", a:["Separo e tenho DRE/orçamento; concilio tudo todo mês","Ainda misturo; estou organizando aos poucos","Separo, mas às vezes me atrapalho; uso planilha simples","Separação total com controles e automações financeiras"], w:[3,1,2,4] },
   { q:"Costuma tomar decisões mais na intuição ou em dados?", a:["Intuição com validações pontuais (pesquisas rápidas, testes)","Maior parte na intuição; raramente registro dados","Decisões orientadas por painéis/KPIs e experimentos","Combino dados básicos (planilhas/CRM) com a experiência prática"], w:[2,1,4,3] },
   { q:"Já buscou consultoria ou mentoria para apoiar sua gestão?", a:["Mentoria recorrente e programas de aceleração","Sessões pontuais quando surge um desafio específico","Nunca busquei; aprendo sozinho(a) e com a equipe","Mentoria estruturada + acompanhamento com plano de ação"], w:[4,2,1,3] },
   { q:"Seu negócio tem uma rotina organizada (processos definidos, controles de estoque, fluxo de caixa)?", a:["Processos básicos e alguns checklists em uso","Processos padronizados, indicadores e auditorias internas","Rotina definida, controles em planilhas/ERP simples","Processos mapeados e revisados com melhoria contínua"], w:[1,4,2,3] },
@@ -193,55 +199,78 @@ const QUESTIONS=[
   { q:"Você dedica parte do seu tempo a pensar em expansão ou novos mercados?", a:["Exploramos oportunidades com metas e pesquisas formais","Plano de expansão com cronograma e budget","Penso nisso quando sobra tempo","Estudo ideias e faço testes menores para validar"], w:[3,4,1,2] },
   { q:"Se você se ausentar por alguns dias, o negócio continua funcionando sem parar?", a:["Sim, por semanas: processos e líderes tocam a operação","Sim, por alguns dias com pequenas dependências","Parcialmente; preciso estar por perto para decidir pontos-chave","Ainda não; a operação depende muito de mim"], w:[4,2,3,1] }
 ];
-const RESULTS = {
+
+/* Resultados */
+const RESULTS={
   1:{title:"Nível 1 – Aventureiro 🚀",desc:"Parabéns pela coragem de dar o primeiro passo! Você, assim como eu, já saiu da ideia e partiu para a ação. Agora é hora de transformar entusiasmo em estratégia para construir uma base sólida e sustentável para o seu negócio.",actions:["Buscar apoio contábil e financeiro básico.","Fazer um curso introdutório de gestão.","Criar um plano de negócios simples.","Separar finanças pessoais das empresariais."],avatarF:"nivel1-fem.png",avatarM:"nivel1-masc.png",course:"Ative o Laboratório 2.0"},
   2:{title:"Nível 2 – Estrategista 📊",desc:"Você já pensa e age como um verdadeiro estrategista! Seu negócio demonstra organização e visão de crescimento. Agora é hora de fortalecer sua estratégia e desenvolver liderança para conquistar novos mercados.",actions:["Participar de mentorias com empresários experientes.","Investir em marketing estruturado e automação.","Acompanhar indicadores financeiros regularmente.","Desenvolver habilidades de liderança."],avatarF:"nivel2-fem.png",avatarM:"nivel2-masc.png",course:"Ative o Laboratório 3.0"},
   3:{title:"Nível 3 – Líder 🏆",desc:"Você alcançou a posição de líder! Sua visão inspira sua equipe e o mercado. Agora o desafio é inovar, expandir e preparar sucessores para perpetuar o legado da sua empresa.",actions:["Investir em inovação e tecnologia.","Expandir para novos mercados.","Formar e capacitar líderes internos.","Criar planos de sucessão e governança corporativa."],avatarF:"nivel3-fem.png",avatarM:"nivel3-masc.png",course:"Ative o Laboratório 4.0"}
 };
-</script>
-const RESULTS={ /* ... (mantém seus resultados originais) ... */ };
+
+/* Estado & navegação do quiz */
 let state={idx:0,score:0,gender:"masc"};
-function start(g){ gateOr(()=>{state.gender=g;state.idx=0;state.score=0;renderQ();go('quiz');})(); }
-function renderQ(){ if(state.idx>=QUESTIONS.length){finish();return;}
- let fundo="images/fundo1.png"; if(state.idx>=5&&state.idx<10)fundo="images/fundo2.png"; if(state.idx>=10)fundo="images/fundo3.png";
- document.getElementById('bg-quiz').style.backgroundImage="url('"+fundo+"')";
- document.getElementById('q-counter').textContent=(state.idx+1)+"/"+QUESTIONS.length;
- document.getElementById('quiz-head').style.display=(state.idx===0)?'block':'none';
- const q=QUESTIONS[state.idx];
- document.getElementById('qtext').textContent=q.q;
- const opts=document.getElementById('opts'); opts.innerHTML="";
- q.a.forEach((t,i)=>{const b=document.createElement('button');b.className='opt';b.textContent=t;b.onclick=()=>{playClick();state.score+=(q.w?q.w[i]:(i+1));state.idx++;renderQ();};opts.appendChild(b);});
+function start(g){ gateOr(()=>{ state.gender=g; state.idx=0; state.score=0; renderQ(); go('quiz'); })(); }
+function renderQ(){
+  if(state.idx>=QUESTIONS.length){ finish(); return; }
+  let fundo="images/fundo1.png"; if(state.idx>=5&&state.idx<10) fundo="images/fundo2.png"; if(state.idx>=10) fundo="images/fundo3.png";
+  document.getElementById('bg-quiz').style.backgroundImage="url('"+fundo+"')";
+  document.getElementById('q-counter').textContent=(state.idx+1)+"/"+QUESTIONS.length;
+  document.getElementById('quiz-head').style.display=(state.idx===0)?'block':'none';
+  const q=QUESTIONS[state.idx];
+  document.getElementById('qtext').textContent=q.q;
+  const opts=document.getElementById('opts'); opts.innerHTML="";
+  q.a.forEach((t,i)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=t;
+    b.onclick=()=>{ playClick(); state.score+=(q.w?q.w[i]:(i+1)); state.idx++; renderQ(); };
+    opts.appendChild(b);
+  });
 }
-function maskEmail(e){if(!e)return'';const[u,d]=e.split('@');return(u?.slice(0,3)||'')+'***@'+(d||'');}
+
+/* Utilidades */
+function maskEmail(e){ if(!e) return ''; const [u,d]=e.split('@'); return (u?.slice(0,3)||'')+'***@'+(d||''); }
+
+/* Final */
 function finish(){
- let lvl=1;if(state.score>45)lvl=3;else if(state.score>27)lvl=2;
- const res=RESULTS[lvl];
- let email='';try{if(currentToken){const p=JSON.parse(atob(currentToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));email=p.email||'';}}catch(e){}
- document.getElementById('r-title').textContent=res.title;
- document.getElementById('r-desc').textContent=res.desc;
- const ul=document.getElementById('r-actions');ul.innerHTML="";res.actions.forEach(a=>{const li=document.createElement('li');li.textContent="🔹 "+a;ul.appendChild(li);});
- document.getElementById('wm').textContent=email?('Acesso: '+maskEmail(email)):'';
- const avatar=(state.gender==='fem')?res.avatarF:res.avatarM;
- const bg="/.netlify/functions/assets?file="+encodeURIComponent(avatar)+"&token="+encodeURIComponent(currentToken);
- document.getElementById('bg-result').style.backgroundImage="url('"+bg+"')";
- const rc=document.getElementById('r-course');rc.textContent=res.course;rc.onclick=()=>{window.open('https://bit.ly/eva_acontabil','_blank');};
- playWin();go('result');
+  let lvl=1; if(state.score>45) lvl=3; else if(state.score>27) lvl=2;
+  const res=RESULTS[lvl];
+  let email=''; try{ if(currentToken){ const p=JSON.parse(atob(currentToken.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); email=p.email||''; } }catch(e){}
+  document.getElementById('r-title').textContent=res.title;
+  document.getElementById('r-desc').textContent=res.desc;
+  const ul=document.getElementById('r-actions'); ul.innerHTML=""; res.actions.forEach(a=>{ const li=document.createElement('li'); li.textContent="🔹 "+a; ul.appendChild(li); });
+  document.getElementById('wm').textContent = email ? ('Acesso: '+maskEmail(email)) : '';
+  const avatar=(state.gender==='fem')?res.avatarF:res.avatarM;
+  const bg="/.netlify/functions/assets?file="+encodeURIComponent(avatar)+"&token="+encodeURIComponent(currentToken);
+  document.getElementById('bg-result').style.backgroundImage="url('"+bg+"')";
+  const rc=document.getElementById('r-course'); rc.textContent=res.course; rc.onclick=()=>{ window.open('https://bit.ly/eva_acontabil','_blank'); };
+  playWin(); go('result');
 }
-function gateOr(fn){return(...a)=>isAuthorized?fn(...a):(alert("Acesso restrito. Ative o jogo na Introdução e volte com o link de acesso."),go('intro'));}
+
+/* Gate genérico: se não autorizado, manda para a INTRO */
+function gateOr(fn){ return (...a)=> isAuthorized ? fn(...a) : (alert("Acesso restrito. Ative o jogo na Introdução e volte com o link de acesso."), go('intro')); }
+
+/* Pagamento */
 async function createAndPay(btn){
- try{
-  btn.disabled=true;playClick();
-  const r=await fetch('/.netlify/functions/mp-create-preference',{method:'POST'});
-  const data=await r.json();
-  if(!r.ok||!data.ok||!data.init_point||!data.preference_id){alert('Não foi possível iniciar o pagamento.');btn.disabled=false;return false;}
-  const pref=data.preference_id,init=data.init_point;
-  try{localStorage.setItem('mp_pref_id',pref);}catch(e){}
-  const a=document.createElement('a');a.href=init;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();document.body.removeChild(a);
-  window.location.href='/acesso.html?preference_id='+encodeURIComponent(pref);
-  return false;
- }catch(e){alert('Erro ao iniciar pagamento.');btn.disabled=false;return false;}
+  try{
+    btn.disabled=true; playClick();
+    const r=await fetch('/.netlify/functions/mp-create-preference',{method:'POST'});
+    const data=await r.json();
+    if(!r.ok || !data.ok || !data.init_point || !data.preference_id){
+      alert('Não foi possível iniciar o pagamento. Tente novamente.');
+      btn.disabled=false; return false;
+    }
+    const pref=data.preference_id, init=data.init_point;
+    try{ localStorage.setItem('mp_pref_id', pref); }catch(e){}
+    const a=document.createElement('a'); a.href=init; a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    window.location.href='/acesso.html?preference_id='+encodeURIComponent(pref);
+    return false;
+  }catch(e){
+    alert('Erro ao iniciar pagamento. Tente novamente.');
+    btn.disabled=false; return false;
+  }
 }
-document.addEventListener('DOMContentLoaded',validarAcessoSeHouverToken);
+
+/* Boot */
+document.addEventListener('DOMContentLoaded', validarAcessoSeHouverToken);
 </script>
+
 </body>
 </html>
